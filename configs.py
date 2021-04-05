@@ -44,11 +44,10 @@ class Configs(SqlInterface, Hashable) :
 					updated_on = now(),
 					value = %s,
 					updated_by = %s
-				WHERE key = %s;
 			""",
 			(
 				config, value, user.user_id,
-				value, user.user_id, config,
+				value, user.user_id,
 			),
 			commit=True,
 		)
