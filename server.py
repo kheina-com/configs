@@ -16,20 +16,18 @@ async def shutdown() :
 
 @app.get('/v1/banner')
 async def v1FetchUser() :
-	configs.getConfig('banner')
+	return configs.getConfig('banner')
 
 
-@app.post('/v1/update_config')
+@app.post('/v1/update_config', status_code=204)
 async def v1UpdateSelf(req: Request, body: UpdateConfig) :
-	req.user.authenticated()
+	await req.user.authenticated()
 
 	configs.updateConfig(
 		req.user,
 		body.config,
 		body.value,
 	)
-
-	return Response(None, status_code=204)
 
 
 if __name__ == '__main__' :
