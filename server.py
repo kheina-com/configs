@@ -29,6 +29,8 @@ async def v1UpdateSelf(req: Request, body: UpdateConfig) :
 		body.value,
 	)
 
+	return Response(None, status_code=204)
+
 
 if __name__ == '__main__' :
 	from uvicorn.main import run
