@@ -3,6 +3,7 @@ from kh_common.caching import ArgsCache
 from kh_common.hashing import Hashable
 from kh_common.sql import SqlInterface
 from kh_common.auth import KhUser
+from typing import Any, Dict
 
 
 class Configs(SqlInterface, Hashable) :
@@ -14,7 +15,7 @@ class Configs(SqlInterface, Hashable) :
 
 	@ArgsCache(60)
 	@HttpErrorHandler('retrieving config')
-	def getConfig(self, config: str) -> str :
+	def getConfig(self, config: str) -> Dict[str, Any] :
 		data = self.query("""
 			SELECT value
 			FROM kheina.public.configs

@@ -1,5 +1,4 @@
-from kh_common.server import Request, ServerApp, UJSONResponse
-from kh_common.exceptions.http_error import HttpErrorHandler, NotFound
+from kh_common.server import Request, ServerApp
 from kh_common.caching import KwargsCache
 from fastapi.responses import Response
 from models import UpdateConfig
@@ -17,9 +16,7 @@ async def shutdown() :
 
 @app.get('/v1/banner')
 async def v1FetchUser() :
-	return UJSONResponse(
-		configs.getConfig('banner')
-	)
+	configs.getConfig('banner')
 
 
 @app.post('/v1/update_config')
