@@ -1,7 +1,7 @@
 from typing import Any, Dict
 
 from kh_common.auth import KhUser
-from kh_common.caching import AerospikeCache, ArgsCache
+from kh_common.caching import AerospikeCache
 from kh_common.config.credentials import creator_access_token
 from kh_common.exceptions.http_error import HttpErrorHandler, NotFound
 from kh_common.hashing import Hashable
@@ -20,14 +20,14 @@ class Configs(SqlInterface, Hashable) :
 		SqlInterface.__init__(self)
 
 
-	@AerospikeCache('kheina', 'configs', 'patreon-campaign-funds')
 	@HttpErrorHandler('retrieving patreon campaign info')
+	@AerospikeCache('kheina', 'configs', 'patreon-campaign-funds')
 	def getFunding(self) -> int :
 		return patreon_client.fetch_campaign().data()[0].attribute('campaign_pledge_sum')
 
 
-	@AerospikeCache('kheina', 'configs', '{config}', local_TTL=60)
 	@HttpErrorHandler('retrieving config')
+	@AerospikeCache('kheina', 'configs', '{config}', local_TTL=60)
 	async def getConfig(self, config: str) -> Dict[str, str] :
 		data = await self.query_async("""
 			SELECT value
