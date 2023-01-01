@@ -41,7 +41,7 @@ async def v1Banner() :
 async def v1Funding() :
 	return FundingResponse(
 		funds=configs.getFunding(),
-		costs=int(await configs.getConfig('costs')),
+		costs=int(await configs.getConfig('costs')['costs']),
 	)
 
 
