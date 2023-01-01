@@ -28,7 +28,7 @@ class Configs(SqlInterface, Hashable) :
 
 	@HttpErrorHandler('retrieving config')
 	@AerospikeCache('kheina', 'configs', '{config}', local_TTL=60)
-	async def getConfig(self, config: str) -> Dict[str, str] :
+	async def getConfig(self, config: str, converter: type=str) -> Dict[str, Any] :
 		data = await self.query_async("""
 			SELECT value
 			FROM kheina.public.configs
@@ -42,7 +42,7 @@ class Configs(SqlInterface, Hashable) :
 			raise NotFound('no data was found for the provided config.')
 
 		return {
-			config: data[0],
+			config: converter(data[0]),
 		}
 
 
