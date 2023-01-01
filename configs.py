@@ -22,7 +22,7 @@ class Configs(SqlInterface, Hashable) :
 
 	@AerospikeCache('kheina', 'configs', 'patreon-campaign-funds')
 	@HttpErrorHandler('retrieving patreon campaign info')
-	def getFunding() -> int :
+	def getFunding(self) -> int :
 		return patreon_client.fetch_campaign().data()[0].attribute('campaign_pledge_sum')
 
 
