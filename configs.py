@@ -1,9 +1,16 @@
+from typing import Any, Dict
+
+from kh_common.auth import KhUser
+from kh_common.caching import AerospikeCache, ArgsCache
+from kh_common.config.credentials import creator_access_token
 from kh_common.exceptions.http_error import HttpErrorHandler, NotFound
-from kh_common.caching import ArgsCache
 from kh_common.hashing import Hashable
 from kh_common.sql import SqlInterface
-from kh_common.auth import KhUser
-from typing import Any, Dict
+from patreon import API as PatreonApi
+
+
+# at some point we probably want to convert all of this to using avro and storing things as binary
+patreon_client: PatreonApi = PatreonApi(creator_access_token)
 
 
 class Configs(SqlInterface, Hashable) :
@@ -13,10 +20,16 @@ class Configs(SqlInterface, Hashable) :
 		SqlInterface.__init__(self)
 
 
-	@ArgsCache(60)
+	@AerospikeCache('kheina', 'configs', 'patreon-campaign-funds')
+	@HttpErrorHandler('retrieving patreon campaign info')
+	def getFunding() -> int :
+		return patreon_client.fetch_campaign().data()[0].attribute('campaign_pledge_sum')
+
+
+	@AerospikeCache('kheina', 'configs', '{config}', local_TTL=60)
 	@HttpErrorHandler('retrieving config')
-	def getConfig(self, config: str) -> Dict[str, Any] :
-		data = self.query("""
+	async def getConfig(self, config: str) -> Dict[str, str] :
+		data = await self.query_async("""
 			SELECT value
 			FROM kheina.public.configs
 			WHERE key = %s;
@@ -34,8 +47,8 @@ class Configs(SqlInterface, Hashable) :
 
 
 	@HttpErrorHandler('updating config')
-	def updateConfig(self, user: KhUser, config: str, value: str) -> None :
-		self.query("""
+	async def updateConfig(self, user: KhUser, config: str, value: str) -> None :
+		await self.query_async("""
 			INSERT INTO kheina.public.configs
 			(key, value, updated_by)
 			VALUES

@@ -1,13 +1,13 @@
+from kh_common.auth import Scope
 from kh_common.server import Request, ServerApp
-from kh_common.caching import KwargsCache
-from fastapi.responses import Response
-from models import UpdateConfig
+
 from configs import Configs
+from models import FundingResponse, UpdateConfig
 
 
 app = ServerApp(
 	auth_required = False,
-		allowed_hosts = [
+	allowed_hosts = [
 		'localhost',
 		'127.0.0.1',
 		'*.kheina.com',
@@ -24,7 +24,7 @@ app = ServerApp(
 		'fuzz.ly',
 	],
 )
-configs = Configs()
+configs: Configs = Configs()
 
 
 @app.on_event('shutdown')
@@ -33,21 +33,27 @@ async def shutdown() :
 
 
 @app.get('/v1/banner')
-async def v1FetchUser() :
-	return configs.getConfig('banner')
+async def v1Banner() :
+	return await configs.getConfig('banner')
+
+
+@app.get('/v1/funding', response_model=FundingResponse)
+async def v1Funding() :
+	return FundingResponse(
+		funds=configs.getFunding(),
+		costs=int(await configs.getConfig('costs')),
+	)
 
 
 @app.post('/v1/update_config', status_code=204)
-async def v1UpdateSelf(req: Request, body: UpdateConfig) :
-	await req.user.authenticated()
+async def v1UpdateConfig(req: Request, body: UpdateConfig) :
+	await req.user.verify_scope(Scope.mod)
 
-	configs.updateConfig(
+	await configs.updateConfig(
 		req.user,
 		body.config,
 		body.value,
 	)
-
-	return Response(None, status_code=204)
 
 
 if __name__ == '__main__' :
