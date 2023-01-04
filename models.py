@@ -1,11 +1,34 @@
-from typing import Union
+from enum import Enum, unique
+from typing import Literal, Optional, Union
 
 from pydantic import BaseModel
 
 
-class UpdateConfig(BaseModel) :
-	config: str
-	value: Union[str, None]
+class BannerStore(BaseModel) :
+	banner: Optional[str]
+
+
+class CostsStore(BaseModel) :
+	costs: int
+
+
+@unique
+class ConfigType(str, Enum) :
+	banner: str = 'banner'
+	costs: str = 'costs'
+
+
+class UpdateBannerRequest(BaseModel) :
+	config: Literal[ConfigType.banner]
+	value: BannerStore
+
+
+class UpdateCostsRequest(BaseModel) :
+	config: Literal[ConfigType.costs]
+	value: CostsStore
+
+
+UpdateConfigRequest: type = Union[UpdateBannerRequest, UpdateCostsRequest]
 
 
 class FundingResponse(BaseModel) :
@@ -13,5 +36,5 @@ class FundingResponse(BaseModel) :
 	costs: int
 
 
-class BannerResponse(BaseModel) :
-	banner: str
+class BannerResponse(BannerStore) :
+	pass

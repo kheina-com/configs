@@ -1,18 +1,28 @@
-from typing import Any, Dict
+from typing import Dict, Tuple
 
+from avrofastapi.serialization import AvroDeserializer, AvroSerializer
 from kh_common.auth import KhUser
-from kh_common.caching import AerospikeCache, SimpleCache
+from kh_common.caching import AerospikeCache
 from kh_common.caching.key_value_store import KeyValueStore
 from kh_common.config.credentials import creator_access_token
 from kh_common.exceptions.http_error import HttpErrorHandler, NotFound
 from kh_common.hashing import Hashable
 from kh_common.sql import SqlInterface
 from patreon import API as PatreonApi
+from pydantic import BaseModel
+
+from models import BannerStore, ConfigType, CostsStore
 
 
-# at some point we probably want to convert all of this to using avro and storing things as binary
-patreon_client: PatreonApi = PatreonApi(creator_access_token)
+PatreonClient: PatreonApi = PatreonApi(creator_access_token)
 KVS: KeyValueStore = KeyValueStore('kheina', 'configs', local_TTL=60)
+Serializers: Dict[str, Tuple[AvroSerializer, AvroDeserializer]] = {
+	ConfigType.banner: (AvroSerializer(BannerStore), AvroDeserializer(BannerStore)),
+	ConfigType.costs: (AvroSerializer(CostsStore), AvroDeserializer(CostsStore)),
+}
+
+
+assert Serializers.keys() == set(ConfigType.__members__.values()), 'Did you forget to add serializers for a config?'
 
 
 class Configs(SqlInterface, Hashable) :
@@ -23,16 +33,17 @@ class Configs(SqlInterface, Hashable) :
 
 
 	@HttpErrorHandler('retrieving patreon campaign info')
-	@SimpleCache(600)
+	@AerospikeCache('kheina', 'configs', 'patreon-campaign-funds', TTL_minutes=10)
 	def getFunding(self) -> int :
-		return patreon_client.fetch_campaign().data()[0].attribute('campaign_pledge_sum')
+		return PatreonClient.fetch_campaign().data()[0].attribute('campaign_pledge_sum')
 
 
 	@HttpErrorHandler('retrieving config')
 	@AerospikeCache('kheina', 'configs', '{config}', _kvs=KVS)
-	async def getConfig(self, config: str) -> Dict[str, Any] :
+	async def getConfig(self, config: ConfigType) -> BaseModel :
+		deserializer: AvroDeserializer = Serializers[config][1]
 		data = await self.query_async("""
-			SELECT value
+			SELECT bytes
 			FROM kheina.public.configs
 			WHERE key = %s;
 			""",
@@ -43,25 +54,27 @@ class Configs(SqlInterface, Hashable) :
 		if not data :
 			raise NotFound('no data was found for the provided config.')
 
-		return data[0]
+		return deserializer(data[0])
 
 
 	@HttpErrorHandler('updating config')
-	async def updateConfig(self, user: KhUser, config: str, value: str) -> None :
+	async def updateConfig(self, user: KhUser, config: ConfigType, value: BaseModel) -> None :
+		serializer: AvroSerializer = Serializers[config][0]
+		data: bytes = serializer(value)
 		await self.query_async("""
 			INSERT INTO kheina.public.configs
-			(key, value, updated_by)
+			(key, bytes, updated_by)
 			VALUES
 			(%s, %s, %s)
 			ON CONFLICT ON CONSTRAINT configs_pkey DO 
 				UPDATE SET
 					updated_on = now(),
-					value = %s,
-					updated_by = %s
+					bytes = %s,
+					updated_by = %s;
 			""",
 			(
-				config, value, user.user_id,
-				value, user.user_id,
+				config, data, user.user_id,
+				data, user.user_id,
 			),
 			commit=True,
 		)

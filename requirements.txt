@@ -1,3 +1,4 @@
-kh-common[auth,logging,sql]~=0.6.2
+kh-common[auth,logging,sql]~=0.6.4
 gunicorn~=20.1.0
 patreon~=0.5.0
+avrofastapi~=0.0.1

@@ -4,7 +4,7 @@ from kh_common.auth import Scope
 from kh_common.server import Request, ServerApp
 
 from configs import Configs
-from models import BannerResponse, FundingResponse, UpdateConfig
+from models import BannerResponse, CostsStore, FundingResponse, UpdateConfigRequest
 
 
 app = ServerApp(
@@ -36,24 +36,21 @@ async def shutdown() :
 
 @app.get('/v1/banner', response_model=BannerResponse)
 async def v1Banner() :
-	return BannerResponse(
-		banner=await configs.getConfig('banner'),
-	)
+	return await configs.getConfig('banner')
 
 
 @app.get('/v1/funding', response_model=FundingResponse)
 async def v1Funding() :
-	costs: Task[str] = ensure_future(configs.getConfig('costs'))
+	costs: Task[CostsStore] = ensure_future(configs.getConfig('costs'))
 	return FundingResponse(
 		funds=configs.getFunding(),
-		costs=int(await costs),
+		costs=(await costs).costs,
 	)
 
 
 @app.post('/v1/update_config', status_code=204)
-async def v1UpdateConfig(req: Request, body: UpdateConfig) :
+async def v1UpdateConfig(req: Request, body: UpdateConfigRequest) :
 	await req.user.verify_scope(Scope.mod)
-
 	await configs.updateConfig(
 		req.user,
 		body.config,
