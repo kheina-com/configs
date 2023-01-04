@@ -2,12 +2,12 @@ from typing import Any, Dict
 
 from kh_common.auth import KhUser
 from kh_common.caching import AerospikeCache, SimpleCache
+from kh_common.caching.key_value_store import KeyValueStore
 from kh_common.config.credentials import creator_access_token
 from kh_common.exceptions.http_error import HttpErrorHandler, NotFound
 from kh_common.hashing import Hashable
 from kh_common.sql import SqlInterface
 from patreon import API as PatreonApi
-from kh_common.caching.key_value_store import KeyValueStore
 
 
 # at some point we probably want to convert all of this to using avro and storing things as binary
@@ -30,7 +30,7 @@ class Configs(SqlInterface, Hashable) :
 
 	@HttpErrorHandler('retrieving config')
 	@AerospikeCache('kheina', 'configs', '{config}', _kvs=KVS)
-	async def getConfig(self, config: str, converter: type=str) -> Dict[str, Any] :
+	async def getConfig(self, config: str) -> Dict[str, Any] :
 		data = await self.query_async("""
 			SELECT value
 			FROM kheina.public.configs
@@ -43,9 +43,7 @@ class Configs(SqlInterface, Hashable) :
 		if not data :
 			raise NotFound('no data was found for the provided config.')
 
-		return {
-			config: converter(data[0]),
-		}
+		return data[0]
 
 
 	@HttpErrorHandler('updating config')

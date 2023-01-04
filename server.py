@@ -1,8 +1,10 @@
+from asyncio import Task, ensure_future
+
 from kh_common.auth import Scope
 from kh_common.server import Request, ServerApp
 
 from configs import Configs
-from models import FundingResponse, UpdateConfig, BannerResponse
+from models import BannerResponse, FundingResponse, UpdateConfig
 
 
 app = ServerApp(
@@ -41,9 +43,10 @@ async def v1Banner() :
 
 @app.get('/v1/funding', response_model=FundingResponse)
 async def v1Funding() :
+	costs: Task[str] = ensure_future(configs.getConfig('costs'))
 	return FundingResponse(
 		funds=configs.getFunding(),
-		costs=(await configs.getConfig('costs', int))['costs'],
+		costs=int(await costs),
 	)
 
 
