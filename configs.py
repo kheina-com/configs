@@ -1,16 +1,18 @@
 from typing import Any, Dict
 
 from kh_common.auth import KhUser
-from kh_common.caching import AerospikeCache
+from kh_common.caching import AerospikeCache, SimpleCache
 from kh_common.config.credentials import creator_access_token
 from kh_common.exceptions.http_error import HttpErrorHandler, NotFound
 from kh_common.hashing import Hashable
 from kh_common.sql import SqlInterface
 from patreon import API as PatreonApi
+from kh_common.caching.key_value_store import KeyValueStore
 
 
 # at some point we probably want to convert all of this to using avro and storing things as binary
 patreon_client: PatreonApi = PatreonApi(creator_access_token)
+KVS: KeyValueStore = KeyValueStore('kheina', 'configs', local_TTL=60)
 
 
 class Configs(SqlInterface, Hashable) :
@@ -21,13 +23,13 @@ class Configs(SqlInterface, Hashable) :
 
 
 	@HttpErrorHandler('retrieving patreon campaign info')
-	@AerospikeCache('kheina', 'configs', 'patreon-campaign-funds')
+	@SimpleCache(600)
 	def getFunding(self) -> int :
 		return patreon_client.fetch_campaign().data()[0].attribute('campaign_pledge_sum')
 
 
 	@HttpErrorHandler('retrieving config')
-	@AerospikeCache('kheina', 'configs', '{config}', local_TTL=60)
+	@AerospikeCache('kheina', 'configs', '{config}', _kvs=KVS)
 	async def getConfig(self, config: str, converter: type=str) -> Dict[str, Any] :
 		data = await self.query_async("""
 			SELECT value
@@ -65,3 +67,4 @@ class Configs(SqlInterface, Hashable) :
 			),
 			commit=True,
 		)
+		KVS.put(config, value)
