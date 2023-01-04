@@ -11,3 +11,7 @@ class UpdateConfig(BaseModel) :
 class FundingResponse(BaseModel) :
 	funds: int
 	costs: int
+
+
+class BannerResponse(BaseModel) :
+	banner: str
