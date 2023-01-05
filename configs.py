@@ -74,12 +74,13 @@ class Configs(SqlInterface) :
 		if not data :
 			raise NotFound('no data was found for the provided config.')
 
-		assert data[0][:2] == AvroMarker
-		fingerprint: str = b64encode(data[0][2:10])
+		value: bytes = bytes(data[0])
+		assert value[:2] == AvroMarker
+		fingerprint: str = b64encode(value[2:10])
 
-		deserializer: AvroDeserializer = AvroDeserializer(read_model=self.SerializerTypeMap[config], write_model=await self.getSchema(fingerprint))
+		deserializer: AvroDeserializer = AvroDeserializer(read_model=self.SerializerTypeMap[config], write_model=await Configs.getSchema(fingerprint))
 
-		return deserializer(data[0][10:])
+		return deserializer(value[10:])
 
 
 	@HttpErrorHandler('updating config')
@@ -144,12 +145,13 @@ class Configs(SqlInterface) :
 		if not data :
 			raise NotFound('no data was found for the provided config.')
 
-		assert data[0][:2] == AvroMarker
-		fingerprint: str = b64encode(data[0][2:10])
+		value: bytes = bytes(data[0])
+		assert value[:2] == AvroMarker
+		fingerprint: str = b64encode(value[2:10])
 
-		deserializer: AvroDeserializer = AvroDeserializer(read_model=UserConfig, write_model=await self.getSchema(fingerprint))
+		deserializer: AvroDeserializer = AvroDeserializer(read_model=UserConfig, write_model=await Configs.getSchema(fingerprint))
 
-		return deserializer(data[0][10:])
+		return deserializer(value[10:])
 
 
 	@HttpErrorHandler('saving user config')
