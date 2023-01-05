@@ -13,7 +13,7 @@ from pydantic import BaseModel
 from kh_common.gateway import Gateway
 from avrofastapi.schema import convert_schema
 from aiohttp import ClientResponse
-from kh_common.base64 import b64encode
+from kh_common.base64 import b64encode, b64decode
 from functools import lru_cache
 
 from models import BannerStore, ConfigType, CostsStore, UserConfig, SaveSchemaResponse
@@ -40,17 +40,17 @@ class Configs(SqlInterface) :
 
 	async def startup(self) :
 		self.Serializers = {
-			ConfigType.banner: (AvroSerializer(BannerStore), (await SetAvroSchemaGateway(body=convert_schema(BannerStore))).fingerprint.encode()),
-			ConfigType.costs: (AvroSerializer(CostsStore), (await SetAvroSchemaGateway(body=convert_schema(CostsStore))).fingerprint.encode()),
+			ConfigType.banner: (AvroSerializer(BannerStore), b64decode((await SetAvroSchemaGateway(body=convert_schema(BannerStore))).fingerprint)),
+			ConfigType.costs: (AvroSerializer(CostsStore), b64decode((await SetAvroSchemaGateway(body=convert_schema(CostsStore))).fingerprint)),
 		}
-		self.UserConfigFingerprint = (await SetAvroSchemaGateway(body=convert_schema(UserConfig))).fingerprint.encode()
+		self.UserConfigFingerprint = b64decode((await SetAvroSchemaGateway(body=convert_schema(UserConfig))).fingerprint)
 		assert self.Serializers.keys() == set(ConfigType.__members__.values()), 'Did you forget to add serializers for a config?'
 		assert self.SerializerTypeMap.keys() == set(ConfigType.__members__.values()), 'Did you forget to add serializers for a config?'
 
 
 	@lru_cache(maxsize=32)
-	async def getSchema(fingerprint: str) -> Schema:
-		return parse_avro_schema(await GetAvroSchemaGateway(fingerprint=fingerprint.decode()))
+	async def getSchema(fingerprint: bytes) -> Schema:
+		return parse_avro_schema(await GetAvroSchemaGateway(fingerprint=b64encode(fingerprint).decode()))
 
 
 	@HttpErrorHandler('retrieving patreon campaign info')
@@ -76,7 +76,7 @@ class Configs(SqlInterface) :
 
 		value: bytes = bytes(data[0])
 		assert value[:2] == AvroMarker
-		fingerprint: str = b64encode(value[2:10])
+		fingerprint: bytes = value[2:10]
 
 		deserializer: AvroDeserializer = AvroDeserializer(read_model=self.SerializerTypeMap[config], write_model=await Configs.getSchema(fingerprint))
 
@@ -147,7 +147,7 @@ class Configs(SqlInterface) :
 
 		value: bytes = bytes(data[0])
 		assert value[:2] == AvroMarker
-		fingerprint: str = b64encode(value[2:10])
+		fingerprint: str = value[2:10]
 
 		deserializer: AvroDeserializer = AvroDeserializer(read_model=UserConfig, write_model=await Configs.getSchema(fingerprint))
 
