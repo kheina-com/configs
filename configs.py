@@ -41,8 +41,8 @@ assert SerializerTypeMap.keys() == set(ConfigType.__members__.values()), 'Did yo
 class Configs(SqlInterface) :
 
 	async def startup(self) :
-		Serializers[ConfigType.banner] = (AvroSerializer(BannerStore), (await SetAvroSchemaGateway(body=convert_schema(BannerStore))).fingerprint)
-		Serializers[ConfigType.costs] = (AvroSerializer(CostsStore), (await SetAvroSchemaGateway(body=convert_schema(CostsStore))).fingerprint)
+		Serializers[ConfigType.banner] = (AvroSerializer(BannerStore), (await SetAvroSchemaGateway(body=convert_schema(BannerStore))).fingerprint.encode())
+		Serializers[ConfigType.costs] = (AvroSerializer(CostsStore), (await SetAvroSchemaGateway(body=convert_schema(CostsStore))).fingerprint.encode())
 		UserConfigFingerprint = (await SetAvroSchemaGateway(body=convert_schema(UserConfig))).fingerprint.encode()
 		assert Serializers.keys() == set(ConfigType.__members__.values()), 'Did you forget to add serializers for a config?'
 
