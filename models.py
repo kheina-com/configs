@@ -50,6 +50,6 @@ class BlockingBehavior(Enum) :
 
 
 class UserConfig(BaseModel) :
-	blocking_behavior: Optional[BlockingBehavior]
-	blocked_tags: Optional[List[Set[str]]]
+	blocking_behavior: Optional[	]
+	blocked_tags: Optional[List[List[str]]]
 	blocked_users: Optional[List[int]]
