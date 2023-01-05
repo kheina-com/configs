@@ -1,4 +1,4 @@
-from asyncio import Task, ensure_future
+from asyncio import Task, ensure_future, run
 
 from kh_common.auth import Scope
 from kh_common.server import Request, ServerApp
@@ -63,6 +63,7 @@ async def v1UpdateConfig(req: Request, body: UpdateConfigRequest) :
 	)
 
 
+run(startup)
 if __name__ == '__main__' :
 	from uvicorn.main import run
 	run(app, host='0.0.0.0', port=5006)
