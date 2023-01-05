@@ -1,5 +1,5 @@
 from enum import Enum, unique
-from typing import Literal, Optional, Union
+from typing import Literal, Optional, Union, List, Set
 
 from pydantic import BaseModel
 
@@ -35,10 +35,6 @@ class SaveSchemaResponse(BaseModel) :
 	fingerprint: str
 
 
-class UserConfig(BaseModel) :
-	pass
-
-
 class FundingResponse(BaseModel) :
 	funds: int
 	costs: int
@@ -46,3 +42,14 @@ class FundingResponse(BaseModel) :
 
 class BannerResponse(BannerStore) :
 	pass
+
+
+class BlockingBehavior(Enum) :
+	hide: str = 'hide'
+	omit: str = 'omit'
+
+
+class UserConfig(BaseModel) :
+	blocking_behavior: Optional[BlockingBehavior]
+	blocked_tags: Optional[List[Set[str]]]
+	blocked_users: Optional[List[int]]

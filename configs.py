@@ -22,7 +22,6 @@ from models import BannerStore, ConfigType, CostsStore, UserConfig, SaveSchemaRe
 PatreonClient: PatreonApi = PatreonApi(creator_access_token)
 KVS: KeyValueStore = KeyValueStore('kheina', 'configs', local_TTL=60)
 UserConfigSerializer: AvroSerializer = AvroSerializer(UserConfig)
-UserConfigDeserializer: AvroDeserializer = AvroDeserializer(UserConfig)
 UserConfigKeyFormat: str = 'user_config.{user_id}'
 SetAvroSchemaGateway: Gateway = Gateway(avro_host + '/v1/schema', SaveSchemaResponse, 'POST')
 GetAvroSchemaGateway: Gateway = Gateway(avro_host + '/v1/schema/{fingerprint}', decoder=ClientResponse.read)
@@ -76,10 +75,8 @@ class Configs(SqlInterface) :
 
 		value: bytes = bytes(data[0])
 		assert value[:2] == AvroMarker
-		fingerprint: bytes = value[2:10]
 
-		deserializer: AvroDeserializer = AvroDeserializer(read_model=self.SerializerTypeMap[config], write_model=await Configs.getSchema(fingerprint))
-
+		deserializer: AvroDeserializer = AvroDeserializer(read_model=self.SerializerTypeMap[config], write_model=await Configs.getSchema(value[2:10]))
 		return deserializer(value[10:])
 
 
@@ -147,10 +144,8 @@ class Configs(SqlInterface) :
 
 		value: bytes = bytes(data[0])
 		assert value[:2] == AvroMarker
-		fingerprint: str = value[2:10]
 
-		deserializer: AvroDeserializer = AvroDeserializer(read_model=UserConfig, write_model=await Configs.getSchema(fingerprint))
-
+		deserializer: AvroDeserializer = AvroDeserializer(read_model=UserConfig, write_model=await Configs.getSchema(value[2:10]))
 		return deserializer(value[10:])
 
 
