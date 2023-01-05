@@ -35,7 +35,7 @@ GetAvroSchemaGateway: Gateway = Gateway(avro_host + '/v1/schema/{fingerprint}', 
 AvroMarker: bytes = b'\xC3\x01'
 
 
-assert Serializers.keys() == set(ConfigType.__members__.values()), 'Did you forget to add serializers for a config?'
+assert SerializerTypeMap.keys() == set(ConfigType.__members__.values()), 'Did you forget to add serializers for a config?'
 
 
 def int_to_bytes(integer: int) -> bytes :
@@ -48,6 +48,7 @@ class Configs(SqlInterface) :
 		Serializers[ConfigType.banner] = (AvroSerializer(BannerStore), int_to_bytes((await SetAvroSchemaGateway(body=convert_schema(BannerStore))).fingerprint))
 		Serializers[ConfigType.costs] = (AvroSerializer(CostsStore), int_to_bytes((await SetAvroSchemaGateway(body=convert_schema(CostsStore))).fingerprint))
 		UserConfigFingerprint = int_to_bytes((await SetAvroSchemaGateway(body=convert_schema(UserConfig))).fingerprint)
+		assert Serializers.keys() == set(ConfigType.__members__.values()), 'Did you forget to add serializers for a config?'
 
 
 	@lru_cache(maxsize=32)
