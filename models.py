@@ -1,5 +1,5 @@
 from enum import Enum, unique
-from typing import Literal, Optional, Union, List, Set
+from typing import List, Literal, Optional, Union
 
 from pydantic import BaseModel
 
@@ -50,6 +50,6 @@ class BlockingBehavior(Enum) :
 
 
 class UserConfig(BaseModel) :
-	blocking_behavior: Optional[	]
+	blocking_behavior: Optional[BlockingBehavior]
 	blocked_tags: Optional[List[List[str]]]
 	blocked_users: Optional[List[int]]
