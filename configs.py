@@ -38,16 +38,12 @@ AvroMarker: bytes = b'\xC3\x01'
 assert SerializerTypeMap.keys() == set(ConfigType.__members__.values()), 'Did you forget to add serializers for a config?'
 
 
-def int_to_bytes(integer: int) -> bytes :
-	return integer.to_bytes(8, 'little')
-
-
 class Configs(SqlInterface) :
 
 	async def startup(self) :
-		Serializers[ConfigType.banner] = (AvroSerializer(BannerStore), int_to_bytes((await SetAvroSchemaGateway(body=convert_schema(BannerStore))).fingerprint))
-		Serializers[ConfigType.costs] = (AvroSerializer(CostsStore), int_to_bytes((await SetAvroSchemaGateway(body=convert_schema(CostsStore))).fingerprint))
-		UserConfigFingerprint = int_to_bytes((await SetAvroSchemaGateway(body=convert_schema(UserConfig))).fingerprint)
+		Serializers[ConfigType.banner] = (AvroSerializer(BannerStore), (await SetAvroSchemaGateway(body=convert_schema(BannerStore))).fingerprint)
+		Serializers[ConfigType.costs] = (AvroSerializer(CostsStore), (await SetAvroSchemaGateway(body=convert_schema(CostsStore))).fingerprint)
+		UserConfigFingerprint = (await SetAvroSchemaGateway(body=convert_schema(UserConfig))).fingerprint.encode()
 		assert Serializers.keys() == set(ConfigType.__members__.values()), 'Did you forget to add serializers for a config?'
 
 
