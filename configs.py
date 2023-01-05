@@ -39,13 +39,13 @@ class Configs(SqlInterface) :
 	}
 
 	async def startup(self) :
-		self.Serializers = {
+		Configs.Serializers = {
 			ConfigType.banner: (AvroSerializer(BannerStore), (await SetAvroSchemaGateway(body=convert_schema(BannerStore))).fingerprint.encode()),
 			ConfigType.costs: (AvroSerializer(CostsStore), (await SetAvroSchemaGateway(body=convert_schema(CostsStore))).fingerprint.encode()),
 		}
-		self.UserConfigFingerprint = (await SetAvroSchemaGateway(body=convert_schema(UserConfig))).fingerprint.encode()
-		assert self.Serializers.keys() == set(ConfigType.__members__.values()), 'Did you forget to add serializers for a config?'
-		assert self.SerializerTypeMap.keys() == set(ConfigType.__members__.values()), 'Did you forget to add serializers for a config?'
+		Configs.UserConfigFingerprint = (await SetAvroSchemaGateway(body=convert_schema(UserConfig))).fingerprint.encode()
+		assert Configs.Serializers.keys() == set(ConfigType.__members__.values()), 'Did you forget to add serializers for a config?'
+		assert Configs.SerializerTypeMap.keys() == set(ConfigType.__members__.values()), 'Did you forget to add serializers for a config?'
 
 
 	@lru_cache(maxsize=32)
@@ -77,14 +77,14 @@ class Configs(SqlInterface) :
 		assert data[0][:2] == AvroMarker
 		fingerprint: str = b64encode(data[0][2:10])
 
-		deserializer: AvroDeserializer = AvroDeserializer(read_model=self.SerializerTypeMap[config], write_model=await self.getSchema(fingerprint))
+		deserializer: AvroDeserializer = AvroDeserializer(read_model=Configs.SerializerTypeMap[config], write_model=await self.getSchema(fingerprint))
 
 		return deserializer(data[0][10:])
 
 
 	@HttpErrorHandler('updating config')
 	async def updateConfig(self, user: KhUser, config: ConfigType, value: BaseModel) -> None :
-		serializer: Tuple[AvroSerializer, bytes] = self.Serializers[config]
+		serializer: Tuple[AvroSerializer, bytes] = Configs.Serializers[config]
 		data: bytes = AvroMarker + serializer[1] + serializer[0](value)
 		await self.query_async("""
 			INSERT INTO kheina.public.configs
@@ -108,7 +108,7 @@ class Configs(SqlInterface) :
 
 	@HttpErrorHandler('saving user config')
 	async def setUserConfig(self, user: KhUser, value: UserConfig) -> None :
-		data: bytes = AvroMarker + self.UserConfigFingerprint + UserConfigSerializer(value)
+		data: bytes = AvroMarker + Configs.UserConfigFingerprint + UserConfigSerializer(value)
 		config_key: str = UserConfigKeyFormat.format(user_id=user.user_id)
 		await self.query_async("""
 			INSERT INTO kheina.public.configs
