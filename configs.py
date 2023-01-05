@@ -1,5 +1,5 @@
 from functools import lru_cache
-from typing import Dict, List, Tuple, Type
+from typing import Dict, List, Tuple, Type, Optional
 
 from aiohttp import ClientResponse
 from avrofastapi.schema import convert_schema
@@ -16,7 +16,9 @@ from kh_common.sql import SqlInterface
 from patreon import API as PatreonApi
 from pydantic import BaseModel
 
-from models import BannerStore, ConfigType, CostsStore, SaveSchemaResponse, UserConfig
+from models import BannerStore, ConfigType, CostsStore, SaveSchemaResponse, UserConfig, UserConfigRequest, UserConfigResponse
+from fuzzly_posts import PostGateway
+from fuzzly_posts.models import Post
 
 
 PatreonClient: PatreonApi = PatreonApi(creator_access_token)
@@ -105,8 +107,16 @@ class Configs(SqlInterface) :
 
 
 	@HttpErrorHandler('saving user config')
-	async def setUserConfig(self, user: KhUser, value: UserConfig) -> None :
-		data: bytes = AvroMarker + self.UserConfigFingerprint + UserConfigSerializer(value)
+	async def setUserConfig(self, user: KhUser, value: UserConfigRequest) -> None :
+		user_config: UserConfig = UserConfig(
+			blocking_behavior=value.blocking_behavior,
+			blocked_tags=value.blocked_tags,
+			# TODO: internal tokens need to be added so that we can convert handles to user ids
+			blocked_users=None,
+			wallpaper=value.wallpaper,
+		)
+
+		data: bytes = AvroMarker + self.UserConfigFingerprint + UserConfigSerializer(user_config)
 		config_key: str = UserConfigKeyFormat.format(user_id=user.user_id)
 		await self.query_async("""
 			INSERT INTO kheina.public.configs
@@ -125,7 +135,7 @@ class Configs(SqlInterface) :
 			),
 			commit=True,
 		)
-		KVS.put(config_key, value)
+		KVS.put(config_key, user_config)
 
 
 	@AerospikeCache('kheina', 'configs', UserConfigKeyFormat, _kvs=KVS)
@@ -149,6 +159,18 @@ class Configs(SqlInterface) :
 		return deserializer(value[10:])
 
 
-	@HttpErrorHandler('saving user config')
-	async def getUserConfig(self, user: KhUser) -> UserConfig :
-		return await self._getUserConfig(user.user_id)
+	@HttpErrorHandler('retrieving user config')
+	async def getUserConfig(self, user: KhUser) -> UserConfigResponse :
+		user_config: UserConfig = await self._getUserConfig(user.user_id)
+		wallpaper: Optional[Post] = None
+
+		if user_config.wallpaper :
+			wallpaper = await PostGateway(post=user_config.wallpaper)
+
+		return UserConfigResponse(
+			blocking_behavior=user_config.blocking_behavior,
+			blocked_tags=user_config.blocked_tags,
+			# TODO: internal tokens need to be added so that we can convert user ids to handles
+			blocked_users=[],
+			wallpaper=wallpaper,
+		)

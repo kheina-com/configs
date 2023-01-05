@@ -1,7 +1,8 @@
 from enum import Enum, unique
-from typing import List, Literal, Optional, Union
+from typing import List, Literal, Optional, Set, Union
 
-from pydantic import BaseModel
+from fuzzly_posts.models import Post
+from pydantic import BaseModel, conbytes, constr, ConstrainedStr
 
 
 class BannerStore(BaseModel) :
@@ -53,3 +54,24 @@ class UserConfig(BaseModel) :
 	blocking_behavior: Optional[BlockingBehavior]
 	blocked_tags: Optional[List[List[str]]]
 	blocked_users: Optional[List[int]]
+	wallpaper: Optional[conbytes(min_length=8, max_length=8)]
+
+
+PostId: ConstrainedStr = constr(regex=r'^[a-zA-Z_-]{8}$')
+
+
+class UserConfigRequest(BaseModel) :
+	blocking_behavior: Optional[BlockingBehavior]
+	blocked_tags: Optional[List[Set[str]]]
+	blocked_users: Optional[List[str]]
+	wallpaper: Optional[PostId]
+
+
+class UserConfigResponse(BaseModel) :
+	blocking_behavior: Optional[BlockingBehavior]
+	blocked_tags: Optional[List[Set[str]]]
+	blocked_users: Optional[List[str]]
+	wallpaper: Optional[Post]
+
+
+assert UserConfig.__fields__.keys() == UserConfigResponse.__fields__.keys()

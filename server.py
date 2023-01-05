@@ -4,7 +4,7 @@ from kh_common.auth import Scope
 from kh_common.server import Request, ServerApp
 
 from configs import Configs
-from models import BannerResponse, CostsStore, FundingResponse, UpdateConfigRequest
+from models import BannerResponse, CostsStore, FundingResponse, UpdateConfigRequest, UserConfigRequest, UserConfigResponse
 
 
 app = ServerApp(
@@ -63,7 +63,22 @@ async def v1UpdateConfig(req: Request, body: UpdateConfigRequest) :
 	)
 
 
-run(startup())
+@app.post('/v1/update_user_config', status_code=204)
+async def v1UpdateUserConfig(req: Request, body: UserConfigRequest) :
+	await req.user.authenticated()
+	await configs.setUserConfig(
+		req.user,
+		body,
+	)
+
+
+@app.get('/v1/user', response_model=UserConfigResponse)
+async def v1UserConfig(req: Request) :
+	await req.user.authenticated()
+	return await configs.getUserConfig(req.user)
+
+
+run(startup())  # fastapi/starlette doesn't trigger startup event, so run it manually
 if __name__ == '__main__' :
 	from uvicorn.main import run
 	run(app, host='0.0.0.0', port=5006)
