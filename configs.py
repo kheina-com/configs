@@ -150,7 +150,7 @@ class Configs(SqlInterface) :
 		)
 
 		if not data :
-			raise NotFound('no data was found for the provided config.')
+			raise NotFound('no config was found for the current user.')
 
 		value: bytes = bytes(data[0])
 		assert value[:2] == AvroMarker
@@ -171,6 +171,6 @@ class Configs(SqlInterface) :
 			blocking_behavior=user_config.blocking_behavior,
 			blocked_tags=user_config.blocked_tags,
 			# TODO: internal tokens need to be added so that we can convert user ids to handles
-			blocked_users=[],
+			blocked_users=None,
 			wallpaper=wallpaper,
 		)
