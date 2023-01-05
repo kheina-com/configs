@@ -165,7 +165,7 @@ class Configs(SqlInterface) :
 		wallpaper: Optional[Post] = None
 
 		if user_config.wallpaper :
-			wallpaper = await PostGateway(post=user_config.wallpaper)
+			wallpaper = await PostGateway(post=user_config.wallpaper.decode())
 
 		return UserConfigResponse(
 			blocking_behavior=user_config.blocking_behavior,
