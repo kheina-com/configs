@@ -32,7 +32,7 @@ UpdateConfigRequest: type = Union[UpdateBannerRequest, UpdateCostsRequest]
 
 
 class SaveSchemaResponse(BaseModel) :
-	fingerprint: int
+	fingerprint: str
 
 
 class UserConfig(BaseModel) :
