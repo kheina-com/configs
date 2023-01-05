@@ -50,7 +50,7 @@ class Configs(SqlInterface) :
 
 	@lru_cache(maxsize=32)
 	async def getSchema(fingerprint: str) -> Schema:
-		return parse_avro_schema(await GetAvroSchemaGateway(fingerprint=fingerprint))
+		return parse_avro_schema(await GetAvroSchemaGateway(fingerprint=fingerprint.decode()))
 
 
 	@HttpErrorHandler('retrieving patreon campaign info')
