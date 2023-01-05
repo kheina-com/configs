@@ -31,6 +31,14 @@ class UpdateCostsRequest(BaseModel) :
 UpdateConfigRequest: type = Union[UpdateBannerRequest, UpdateCostsRequest]
 
 
+class SaveSchemaResponse(BaseModel) :
+	fingerprint: int
+
+
+class UserConfig(BaseModel) :
+	pass
+
+
 class FundingResponse(BaseModel) :
 	funds: int
 	costs: int

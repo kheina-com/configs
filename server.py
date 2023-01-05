@@ -29,6 +29,11 @@ app = ServerApp(
 configs: Configs = Configs()
 
 
+@app.on_event('startup')
+async def shutdown() :
+	await configs.startup()
+
+
 @app.on_event('shutdown')
 async def shutdown() :
 	configs.close()
