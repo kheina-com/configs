@@ -30,7 +30,7 @@ configs: Configs = Configs()
 
 
 @app.on_event('startup')
-async def shutdown() :
+async def startup() :
 	await configs.startup()
 
 
