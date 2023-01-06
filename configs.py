@@ -150,7 +150,7 @@ class Configs(SqlInterface) :
 		)
 
 		if not data :
-			raise NotFound('no config was found for the current user.')
+			return UserConfig()
 
 		value: bytes = bytes(data[0])
 		assert value[:2] == AvroMarker
