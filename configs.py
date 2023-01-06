@@ -24,7 +24,7 @@ from fuzzly_configs.models import BannerStore, ConfigType, CostsStore, SaveSchem
 PatreonClient: PatreonApi = PatreonApi(creator_access_token)
 KVS: KeyValueStore = KeyValueStore('kheina', 'configs', local_TTL=60)
 UserConfigSerializer: AvroSerializer = AvroSerializer(UserConfig)
-UserConfigKeyFormat: str = 'user_config.{user_id}'
+UserConfigKeyFormat: str = 'user.{user_id}'
 SetAvroSchemaGateway: Gateway = Gateway(avro_host + '/v1/schema', SaveSchemaResponse, 'POST')
 GetAvroSchemaGateway: Gateway = Gateway(avro_host + '/v1/schema/{fingerprint}', decoder=ClientResponse.read)
 AvroMarker: bytes = b'\xC3\x01'
@@ -139,7 +139,7 @@ class Configs(SqlInterface) :
 
 
 	@AerospikeCache('kheina', 'configs', UserConfigKeyFormat, _kvs=KVS)
-	async def _getUserConfig(self, user_id: int) -> UserConfig :
+	async def _getUserConfig(self, user_id: int) -> UserConfigResponse :
 		data: List[bytes] = await self.query_async("""
 			SELECT bytes
 			FROM kheina.public.configs
@@ -156,12 +156,7 @@ class Configs(SqlInterface) :
 		assert value[:2] == AvroMarker
 
 		deserializer: AvroDeserializer = AvroDeserializer(read_model=UserConfig, write_model=await Configs.getSchema(value[2:10]))
-		return deserializer(value[10:])
-
-
-	@HttpErrorHandler('retrieving user config')
-	async def getUserConfig(self, user: KhUser) -> UserConfigResponse :
-		user_config: UserConfig = await self._getUserConfig(user.user_id)
+		user_config: UserConfig =  deserializer(value[10:])
 		wallpaper: Optional[Post] = None
 
 		if user_config.wallpaper :
@@ -174,3 +169,8 @@ class Configs(SqlInterface) :
 			blocked_users=None,
 			wallpaper=wallpaper,
 		)
+
+
+	@HttpErrorHandler('retrieving user config')
+	async def getUserConfig(self, user: KhUser) -> UserConfigResponse :
+		return await self._getUserConfig(user.user_id)
