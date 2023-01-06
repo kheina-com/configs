@@ -2,7 +2,7 @@ from enum import Enum, unique
 from typing import List, Literal, Optional, Set, Union
 
 from fuzzly_posts.models import Post
-from pydantic import BaseModel, conbytes, constr, ConstrainedStr
+from pydantic import BaseModel, ConstrainedStr, conbytes, constr
 
 
 class BannerStore(BaseModel) :
@@ -74,4 +74,4 @@ class UserConfigResponse(BaseModel) :
 	wallpaper: Optional[Post]
 
 
-assert UserConfig.__fields__.keys() == UserConfigResponse.__fields__.keys()
+assert UserConfig.__fields__.keys() == UserConfigResponse.__fields__.keys() == UserConfigResponse.__fields__.keys()

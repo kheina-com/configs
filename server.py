@@ -4,7 +4,7 @@ from kh_common.auth import Scope
 from kh_common.server import Request, ServerApp
 
 from configs import Configs
-from models import BannerResponse, CostsStore, FundingResponse, UpdateConfigRequest, UserConfigRequest, UserConfigResponse
+from fuzzly_configs.models import BannerResponse, CostsStore, FundingResponse, UpdateConfigRequest, UserConfigRequest, UserConfigResponse
 
 
 app = ServerApp(

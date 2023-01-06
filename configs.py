@@ -1,9 +1,11 @@
 from functools import lru_cache
-from typing import Dict, List, Tuple, Type, Optional
+from typing import Dict, List, Optional, Tuple, Type
 
 from aiohttp import ClientResponse
 from avrofastapi.schema import convert_schema
 from avrofastapi.serialization import AvroDeserializer, AvroSerializer, Schema, parse_avro_schema
+from fuzzly_posts import PostGateway
+from fuzzly_posts.models import Post
 from kh_common.auth import KhUser
 from kh_common.base64 import b64decode, b64encode
 from kh_common.caching import AerospikeCache
@@ -16,9 +18,7 @@ from kh_common.sql import SqlInterface
 from patreon import API as PatreonApi
 from pydantic import BaseModel
 
-from models import BannerStore, ConfigType, CostsStore, SaveSchemaResponse, UserConfig, UserConfigRequest, UserConfigResponse
-from fuzzly_posts import PostGateway
-from fuzzly_posts.models import Post
+from fuzzly_configs.models import BannerStore, ConfigType, CostsStore, SaveSchemaResponse, UserConfig, UserConfigRequest, UserConfigResponse
 
 
 PatreonClient: PatreonApi = PatreonApi(creator_access_token)
