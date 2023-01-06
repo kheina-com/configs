@@ -135,7 +135,19 @@ class Configs(SqlInterface) :
 			),
 			commit=True,
 		)
-		KVS.put(config_key, user_config)
+
+		wallpaper: Optional[Post] = None
+
+		if user_config.wallpaper :
+			wallpaper = await PostGateway(post=user_config.wallpaper.decode())
+
+		KVS.put(config_key, UserConfigResponse(
+			blocking_behavior=user_config.blocking_behavior,
+			blocked_tags=user_config.blocked_tags,
+			# TODO: internal tokens need to be added so that we can convert user ids to handles
+			blocked_users=None,
+			wallpaper=wallpaper,
+		))
 
 
 	@AerospikeCache('kheina', 'configs', UserConfigKeyFormat, _kvs=KVS)
@@ -157,6 +169,7 @@ class Configs(SqlInterface) :
 
 		deserializer: AvroDeserializer = AvroDeserializer(read_model=UserConfig, write_model=await Configs.getSchema(value[2:10]))
 		user_config: UserConfig =  deserializer(value[10:])
+
 		wallpaper: Optional[Post] = None
 
 		if user_config.wallpaper :
