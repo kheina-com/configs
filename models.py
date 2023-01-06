@@ -57,7 +57,7 @@ class UserConfig(BaseModel) :
 	wallpaper: Optional[conbytes(min_length=8, max_length=8)]
 
 
-PostId: ConstrainedStr = constr(regex=r'^[a-zA-Z_-]{8}$')
+PostId: ConstrainedStr = constr(regex=r'^[a-zA-Z0-9_-]{8}$')
 
 
 class UserConfigRequest(BaseModel) :
