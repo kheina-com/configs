@@ -252,4 +252,7 @@ class Configs(SqlInterface) :
 			elif isinstance(value, CssProperty) :
 				css_properties += f'--{name}:var(--{value.value.replace("_", "-")}) !important;'
 
+			else :
+				css_properties += f'{name}:{value} !important;'
+
 		return 'html{' + css_properties + '}'

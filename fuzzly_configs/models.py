@@ -103,7 +103,7 @@ class UserConfig(BaseModel) :
 	blocked_tags: Optional[List[List[str]]]
 	blocked_users: Optional[List[int]]
 	wallpaper: Optional[conbytes(min_length=8, max_length=8)]
-	css_properties: Optional[Dict[str, Union[CssProperty, AvroInt]]]
+	css_properties: Optional[Dict[str, Union[CssProperty, AvroInt, str]]]
 
 
 PostId: ConstrainedStr = constr(regex=r'^[a-zA-Z0-9_-]{8}$')
