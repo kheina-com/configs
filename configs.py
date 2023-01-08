@@ -148,7 +148,7 @@ class Configs(SqlInterface) :
 			# TODO: internal tokens need to be added so that we can convert handles to user ids
 			blocked_users=None,
 			wallpaper=value.wallpaper,
-			colors=self._validateColors(value.colors),
+			colors=Configs._validateColors(value.colors),
 		)
 
 		data: bytes = AvroMarker + self.UserConfigFingerprint + UserConfigSerializer(user_config)
