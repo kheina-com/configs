@@ -33,7 +33,7 @@ AvroMarker: bytes = b'\xC3\x01'
 ColorRegex: Pattern = re_compile(r'^(?:#(?P<hex>[a-f0-9]{8}|[a-f0-9]{6})|(?P<var>[a-z0-9-]+))$')
 ColorValidators: Dict[CssProperty, Pattern] = {
 	CssProperty.background_attachment: re_compile(r'^(?:scroll|fixed|local)(?:,\s*(?:scroll|fixed|local))*$'),
-	CssProperty.background_position: re_compile(r'^(?:top|bottom|left|right)(?:\s+(?:top|bottom|left|right))*$'),
+	CssProperty.background_position: re_compile(r'^(?:top|bottom|left|right|center)(?:\s+(?:top|bottom|left|right|center))*$'),
 	CssProperty.background_repeat: re_compile(r'^(?:repeat-x|repeat-y|repeat|space|round|no-repeat)(?:\s+(?:repeat-x|repeat-y|repeat|space|round|no-repeat))*$'),
 	CssProperty.background_size: re_compile(r'^(?:cover|contain)$'),
 }
@@ -123,14 +123,14 @@ class Configs(SqlInterface) :
 
 		# color input is very strict
 		for color, value in css_properties.items() :
-			color: str = color.value.replace('_', '-')
-
 			if color in ColorValidators :
 				if ColorValidators[color].match(value) :
-					output[color] = value
+					output[color.value.replace('_', '-')] = value
 
 				else :
 					raise BadRequest(f'{value} is not a valid value. when setting a background property, value must be a valid value for that property')
+
+			color: str = color.value.replace('_', '-')
 
 			match: Match[str] = ColorRegex.match(value)
 			if not match :
