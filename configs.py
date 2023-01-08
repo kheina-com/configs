@@ -131,10 +131,11 @@ class Configs(SqlInterface) :
 					raise BadRequest(f'{value} is not a valid color. value must be in the form "#xxxxxx", "#xxxxxxxx", or the name of another color variable (without the preceding deshes)')
 
 			else :
-				try :
-					output[color] = Color(match.group('var'))
+				color: str = match.group('var').replace('-', '_')
+				if match.group('var') in Color._member_map_ :
+					output[color] = Color[match.group('var')]
 
-				except :
+				else :
 					raise BadRequest(f'{value} is not a valid color. value must be in the form "#xxxxxx", "#xxxxxxxx", or the name of another color variable (without the preceding deshes)')
 
 		return output
@@ -232,6 +233,6 @@ class Configs(SqlInterface) :
 				colors += f'--{name.value}:{value:08x};'
 
 			elif isinstance(value, Color) :
-				colors += f'--{name.value}:var(--{value.value});'
+				colors += f'--{name.value}:var(--{value.value.replace("_", "-")});'
 
 		return 'html{' + colors + '}'

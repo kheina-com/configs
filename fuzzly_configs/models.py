@@ -73,11 +73,11 @@ class Color(Enum) :
 	subtle: str = 'subtle'
 	shadowcolor: str = 'shadowcolor'
 	activeshadowcolor: str = 'activeshadowcolor'
-	screen_cover: str = 'screen-cover'
-	border_size: str = 'border-size'
-	border_radius: str = 'border-radius'
-	wave_color: str = 'wave-color'
-	stripe_color: str = 'stripe-color'
+	screen_cover: str = 'screen_cover'
+	border_size: str = 'border_size'
+	border_radius: str = 'border_radius'
+	wave_color: str = 'wave_color'
+	stripe_color: str = 'stripe_color'
 	main: str = 'main'
 	pink: str = 'pink'
 	yellow: str = 'yellow'
@@ -89,8 +89,8 @@ class Color(Enum) :
 	violet: str = 'violet'
 	bright: str = 'bright'
 	funding: str = 'funding'
-	notification_text: str = 'notification-text'
-	notification_bg: str = 'notification-bg'
+	notification_text: str = 'notification_text'
+	notification_bg: str = 'notification_bg'
 
 
 class UserConfig(BaseModel) :
