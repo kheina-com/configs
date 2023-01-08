@@ -207,7 +207,7 @@ class Configs(SqlInterface) :
 		wallpaper: Optional[Post] = None
 
 		if user_config.wallpaper :
-			wallpaper = await self.getPost(user_config.wallpaper.decode())
+			wallpaper = await Configs.getPost(user_config.wallpaper.decode())
 
 		return UserConfigResponse(
 			blocking_behavior=user_config.blocking_behavior,
@@ -221,6 +221,10 @@ class Configs(SqlInterface) :
 	@HttpErrorHandler('retrieving custom theme')
 	async def getUserTheme(self, user: KhUser) -> str :
 		user_config: UserConfig = await self._getUserConfig(user.user_id)
+
+		if not user_config.colors :
+			return ''
+
 		colors: str = ''
 
 		for name, value in user_config.colors.items() :
