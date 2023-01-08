@@ -1,11 +1,11 @@
 from asyncio import Task, ensure_future, run
 
+from fastapi.responses import PlainTextResponse
 from kh_common.auth import Scope
 from kh_common.server import Request, ServerApp
 
 from configs import Configs
 from fuzzly_configs.models import BannerResponse, CostsStore, FundingResponse, UpdateConfigRequest, UserConfigRequest, UserConfigResponse
-from fastapi.responses import PlainTextResponse
 
 
 app = ServerApp(
@@ -85,6 +85,9 @@ async def v1UserTheme(req: Request) :
 	return PlainTextResponse(
 		content=await configs.getUserTheme(req.user),
 		media_type='text/css',
+		headers={
+			'cache-control': 'public, max-age=600',
+		},
 	)
 
 

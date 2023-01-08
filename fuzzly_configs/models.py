@@ -1,9 +1,9 @@
 from enum import Enum, unique
 from typing import Dict, List, Literal, Optional, Set, Union
 
+from avrofastapi.schema import AvroInt
 from fuzzly_posts.models import Post
 from pydantic import BaseModel, ConstrainedStr, conbytes, constr
-from avrofastapi.schema import AvroInt
 
 
 class BannerStore(BaseModel) :

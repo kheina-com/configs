@@ -1,6 +1,7 @@
 from functools import lru_cache
+from re import Match, Pattern
+from re import compile as re_compile
 from typing import Dict, List, Optional, Tuple, Type, Union
-from re import Match, Pattern, compile as re_compile
 
 from aiohttp import ClientResponse
 from avrofastapi.schema import convert_schema
@@ -13,13 +14,13 @@ from kh_common.caching import AerospikeCache, ArgsCache
 from kh_common.caching.key_value_store import KeyValueStore
 from kh_common.config.constants import avro_host
 from kh_common.config.credentials import creator_access_token
-from kh_common.exceptions.http_error import HttpErrorHandler, NotFound, BadRequest
+from kh_common.exceptions.http_error import BadRequest, HttpErrorHandler, NotFound
 from kh_common.gateway import Gateway
 from kh_common.sql import SqlInterface
 from patreon import API as PatreonApi
 from pydantic import BaseModel
 
-from fuzzly_configs.models import BannerStore, ConfigType, CostsStore, SaveSchemaResponse, UserConfig, UserConfigRequest, UserConfigResponse, Color
+from fuzzly_configs.models import BannerStore, Color, ConfigType, CostsStore, SaveSchemaResponse, UserConfig, UserConfigRequest, UserConfigResponse
 
 
 PatreonClient: PatreonApi = PatreonApi(creator_access_token)
