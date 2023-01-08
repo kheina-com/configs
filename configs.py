@@ -214,8 +214,8 @@ class Configs(SqlInterface) :
 
 
 	@ArgsCache(TTL_minutes=1)
-	async def getPost(post_id: str) -> Post :
-		return await PostGateway(post=post_id)
+	async def getPost(user: KhUser, post_id: str) -> Post :
+		return await PostGateway(post=post_id, auth=user.token.token_string)
 
 
 	@HttpErrorHandler('retrieving user config')
@@ -225,7 +225,7 @@ class Configs(SqlInterface) :
 		wallpaper: Optional[Post] = None
 
 		if user_config.wallpaper :
-			wallpaper = await Configs.getPost(user_config.wallpaper.decode())
+			wallpaper = await Configs.getPost(user, user_config.wallpaper.decode())
 
 		return UserConfigResponse(
 			blocking_behavior=user_config.blocking_behavior,
