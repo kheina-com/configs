@@ -20,7 +20,6 @@ from patreon import API as PatreonApi
 from pydantic import BaseModel
 
 from fuzzly_configs.models import BannerStore, ConfigType, CostsStore, SaveSchemaResponse, UserConfig, UserConfigRequest, UserConfigResponse, Color
-from kh_common.utilities import int_from_bytes, int_to_bytes
 
 
 PatreonClient: PatreonApi = PatreonApi(creator_access_token)
@@ -30,7 +29,7 @@ UserConfigKeyFormat: str = 'user.{user_id}'
 SetAvroSchemaGateway: Gateway = Gateway(avro_host + '/v1/schema', SaveSchemaResponse, 'POST')
 GetAvroSchemaGateway: Gateway = Gateway(avro_host + '/v1/schema/{fingerprint}', decoder=ClientResponse.read)
 AvroMarker: bytes = b'\xC3\x01'
-ColorRegex: Pattern = re_compile(r'^(?:#(?<hex>[a-f0-9]{8}|[a-f0-9]{6})|(?<var>[a-z0-9-]+))$')
+ColorRegex: Pattern = re_compile(r'^(?:#(?P<hex>[a-f0-9]{8}|[a-f0-9]{6})|(?P<var>[a-z0-9-]+))$')
 
 
 class Configs(SqlInterface) :
