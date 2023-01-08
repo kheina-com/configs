@@ -1,7 +1,7 @@
 from functools import lru_cache
 from re import Match, Pattern
 from re import compile as re_compile
-from typing import Dict, List, Optional, Tuple, Type, Union
+from typing import Dict, List, Optional, Set, Tuple, Type, Union
 
 from aiohttp import ClientResponse
 from avrofastapi.schema import convert_schema
@@ -20,7 +20,7 @@ from kh_common.sql import SqlInterface
 from patreon import API as PatreonApi
 from pydantic import BaseModel
 
-from fuzzly_configs.models import BannerStore, Color, ConfigType, CostsStore, SaveSchemaResponse, UserConfig, UserConfigRequest, UserConfigResponse
+from fuzzly_configs.models import BannerStore, ConfigType, CostsStore, CssProperty, SaveSchemaResponse, UserConfig, UserConfigRequest, UserConfigResponse
 
 
 PatreonClient: PatreonApi = PatreonApi(creator_access_token)
@@ -31,6 +31,12 @@ SetAvroSchemaGateway: Gateway = Gateway(avro_host + '/v1/schema', SaveSchemaResp
 GetAvroSchemaGateway: Gateway = Gateway(avro_host + '/v1/schema/{fingerprint}', decoder=ClientResponse.read)
 AvroMarker: bytes = b'\xC3\x01'
 ColorRegex: Pattern = re_compile(r'^(?:#(?P<hex>[a-f0-9]{8}|[a-f0-9]{6})|(?P<var>[a-z0-9-]+))$')
+ColorValidators: Dict[CssProperty, Pattern] = {
+	CssProperty.background_attachment: re_compile(r'^(?:scroll|fixed|local)(?:,\s*(?:scroll|fixed|local))*$'),
+	CssProperty.background_position: re_compile(r'^(?:top|bottom|left|right)(?:\s+(?:top|bottom|left|right))*$'),
+	CssProperty.background_repeat: re_compile(r'^(?:repeat-x|repeat-y|repeat|space|round|no-repeat)(?:\s+(?:repeat-x|repeat-y|repeat|space|round|no-repeat))*$'),
+	CssProperty.background_size: re_compile(r'^(?:cover|contain)$'),
+}
 
 
 class Configs(SqlInterface) :
@@ -109,15 +115,23 @@ class Configs(SqlInterface) :
 		KVS.put(config, value)
 
 
-	def _validateColors(colors: Optional[Dict[Color, str]]) -> Optional[Dict[Color, Union[str, int]]] :
+	def _validateColors(colors: Optional[Dict[CssProperty, str]]) -> Optional[Dict[CssProperty, Union[str, int]]] :
 		if not colors :
 			return None
 
-		output: Dict[Color, Union[str, int]] = { }
+		output: Dict[CssProperty, Union[str, int]] = { }
 
 		# color input is very strict
 		for color, value in colors.items() :
 			color: str = color.value.replace('_', '-')
+
+			if color in ColorValidators :
+				if ColorValidators[color].match(value) :
+					output[color] = value
+
+				else :
+					raise BadRequest(f'{value} is not a valid value. when setting a background property, value must be a valid value for that property')
+
 			match: Match[str] = ColorRegex.match(value)
 			if not match :
 				raise BadRequest(f'{value} is not a valid color. value must be in the form "#xxxxxx", "#xxxxxxxx", or the name of another color variable (without the preceding deshes)')
@@ -134,8 +148,8 @@ class Configs(SqlInterface) :
 
 			else :
 				c: str = match.group('var').replace('-', '_')
-				if c in Color._member_map_ :
-					output[color] = Color[c]
+				if c in CssProperty._member_map_ :
+					output[color] = CssProperty[c]
 
 				else :
 					raise BadRequest(f'{value} is not a valid color. value must be in the form "#xxxxxx", "#xxxxxxxx", or the name of another color variable (without the preceding deshes)')
@@ -234,7 +248,7 @@ class Configs(SqlInterface) :
 			if isinstance(value, int) :
 				colors += f'--{name}:#{value:08x} !important;'
 
-			elif isinstance(value, Color) :
+			elif isinstance(value, CssProperty) :
 				colors += f'--{name}:var(--{value.value.replace("_", "-")}) !important;'
 
 		return 'html{' + colors + '}'

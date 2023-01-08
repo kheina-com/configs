@@ -51,7 +51,12 @@ class BlockingBehavior(Enum) :
 	omit: str = 'omit'
 
 
-class Color(Enum) :
+class CssProperty(Enum) :
+	background_attachment: str = 'background_attachment'
+	background_position: str = 'background_position'
+	background_repeat: str = 'background_repeat'
+	background_size: str = 'background_size'
+
 	transition: str = 'transition'
 	fadetime: str = 'fadetime'
 	warning: str = 'warning'
@@ -98,7 +103,7 @@ class UserConfig(BaseModel) :
 	blocked_tags: Optional[List[List[str]]]
 	blocked_users: Optional[List[int]]
 	wallpaper: Optional[conbytes(min_length=8, max_length=8)]
-	colors: Optional[Dict[str, Union[Color, AvroInt]]]
+	css_properties: Optional[Dict[str, Union[CssProperty, AvroInt]]]
 
 
 PostId: ConstrainedStr = constr(regex=r'^[a-zA-Z0-9_-]{8}$')
@@ -109,7 +114,7 @@ class UserConfigRequest(BaseModel) :
 	blocked_tags: Optional[List[Set[str]]]
 	blocked_users: Optional[List[str]]
 	wallpaper: Optional[PostId]
-	colors: Optional[Dict[Color, str]]
+	css_properties: Optional[Dict[CssProperty, str]]
 
 
 class UserConfigResponse(BaseModel) :
