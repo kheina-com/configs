@@ -231,9 +231,9 @@ class Configs(SqlInterface) :
 
 		for name, value in user_config.colors.items() :
 			if isinstance(value, int) :
-				colors += f'--{name}:{value:08x};'
+				colors += f'--{name}:#{value:08x} !important;'
 
 			elif isinstance(value, Color) :
-				colors += f'--{name}:var(--{value.value.replace("_", "-")});'
+				colors += f'--{name}:var(--{value.value.replace("_", "-")}) !important;'
 
 		return 'html{' + colors + '}'

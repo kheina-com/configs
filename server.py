@@ -83,7 +83,7 @@ async def v1UserConfig(req: Request) :
 async def v1UserTheme(req: Request) :
 	await req.user.authenticated()
 	return PlainTextResponse(
-		await configs.getUserTheme(req.user),
+		content=await configs.getUserTheme(req.user),
 		media_type='text/css',
 	)
 
