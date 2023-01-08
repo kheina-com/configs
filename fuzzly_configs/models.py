@@ -51,7 +51,7 @@ class BlockingBehavior(Enum) :
 	omit: str = 'omit'
 
 
-class Color(Enum) :
+class Color(str, Enum) :
 	transition: str = 'transition'
 	fadetime: str = 'fadetime'
 	warning: str = 'warning'
@@ -98,7 +98,7 @@ class UserConfig(BaseModel) :
 	blocked_tags: Optional[List[List[str]]]
 	blocked_users: Optional[List[int]]
 	wallpaper: Optional[conbytes(min_length=8, max_length=8)]
-	colors: Optional[Dict[Color, Union[Color, AvroInt]]]
+	colors: Optional[Dict[str, Union[Color, AvroInt]]]
 
 
 PostId: ConstrainedStr = constr(regex=r'^[a-zA-Z0-9_-]{8}$')

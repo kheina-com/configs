@@ -133,7 +133,7 @@ class Configs(SqlInterface) :
 
 			else :
 				if match.group('var') in Color._member_map_ :
-					output[color] = Color[match.group('var')]
+					output[color] = Color(match.group('var'))
 
 				else :
 					raise BadRequest(f'{value} is not a valid color. value must be in the form "#xxxxxx", "#xxxxxxxx", or the name of another color variable (without the preceding deshes)')
