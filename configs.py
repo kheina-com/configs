@@ -112,7 +112,7 @@ class Configs(SqlInterface) :
 		if not colors :
 			return None
 
-		output: Dict[str, Union[str, int]] = { }
+		output: Dict[Color, Union[str, int]] = { }
 
 		# color input is very strict
 		for color, value in colors.items() :
@@ -131,10 +131,10 @@ class Configs(SqlInterface) :
 					raise BadRequest(f'{value} is not a valid color. value must be in the form "#xxxxxx", "#xxxxxxxx", or the name of another color variable (without the preceding deshes)')
 
 			else :
-				if match.group('var') in Color._member_map_ :
+				try :
 					output[color] = Color(match.group('var'))
 
-				else :
+				except :
 					raise BadRequest(f'{value} is not a valid color. value must be in the form "#xxxxxx", "#xxxxxxxx", or the name of another color variable (without the preceding deshes)')
 
 		return output

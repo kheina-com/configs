@@ -51,7 +51,7 @@ class BlockingBehavior(Enum) :
 	omit: str = 'omit'
 
 
-class Color(str, Enum) :
+class Color(Enum) :
 	transition: str = 'transition'
 	fadetime: str = 'fadetime'
 	warning: str = 'warning'
