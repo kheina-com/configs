@@ -31,7 +31,7 @@ SetAvroSchemaGateway: Gateway = Gateway(avro_host + '/v1/schema', SaveSchemaResp
 GetAvroSchemaGateway: Gateway = Gateway(avro_host + '/v1/schema/{fingerprint}', decoder=ClientResponse.read)
 AvroMarker: bytes = b'\xC3\x01'
 ColorRegex: Pattern = re_compile(r'^(?:#(?P<hex>[a-f0-9]{8}|[a-f0-9]{6})|(?P<var>[a-z0-9-]+))$')
-ColorValidators: Dict[CssProperty, Pattern] = {
+PropValidators: Dict[CssProperty, Pattern] = {
 	CssProperty.background_attachment: re_compile(r'^(?:scroll|fixed|local)(?:,\s*(?:scroll|fixed|local))*$'),
 	CssProperty.background_position: re_compile(r'^(?:top|bottom|left|right|center)(?:\s+(?:top|bottom|left|right|center))*$'),
 	CssProperty.background_repeat: re_compile(r'^(?:repeat-x|repeat-y|repeat|space|round|no-repeat)(?:\s+(?:repeat-x|repeat-y|repeat|space|round|no-repeat))*$'),
@@ -122,15 +122,15 @@ class Configs(SqlInterface) :
 		output: Dict[CssProperty, Union[str, int]] = { }
 
 		# color input is very strict
-		for color, value in css_properties.items() :
-			if color in ColorValidators :
-				if ColorValidators[color].match(value) :
-					output[color.value.replace('_', '-')] = value
+		for prop, value in css_properties.items() :
+			if prop in PropValidators :
+				if PropValidators[prop].match(value) :
+					output[prop.value.replace('_', '-')] = value
 
 				else :
 					raise BadRequest(f'{value} is not a valid value. when setting a background property, value must be a valid value for that property')
 
-			color: str = color.value.replace('_', '-')
+			color: str = prop.value.replace('_', '-')
 
 			match: Match[str] = ColorRegex.match(value)
 			if not match :
