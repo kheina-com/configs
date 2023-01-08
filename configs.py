@@ -1,5 +1,6 @@
 from functools import lru_cache
-from typing import Dict, List, Optional, Tuple, Type
+from typing import Dict, List, Optional, Tuple, Type, Union
+from re import Match, Pattern, compile as re_compile
 
 from aiohttp import ClientResponse
 from avrofastapi.schema import convert_schema
@@ -8,17 +9,18 @@ from fuzzly_posts import PostGateway
 from fuzzly_posts.models import Post
 from kh_common.auth import KhUser
 from kh_common.base64 import b64decode, b64encode
-from kh_common.caching import AerospikeCache
+from kh_common.caching import AerospikeCache, ArgsCache
 from kh_common.caching.key_value_store import KeyValueStore
 from kh_common.config.constants import avro_host
 from kh_common.config.credentials import creator_access_token
-from kh_common.exceptions.http_error import HttpErrorHandler, NotFound
+from kh_common.exceptions.http_error import HttpErrorHandler, NotFound, BadRequest
 from kh_common.gateway import Gateway
 from kh_common.sql import SqlInterface
 from patreon import API as PatreonApi
 from pydantic import BaseModel
 
-from fuzzly_configs.models import BannerStore, ConfigType, CostsStore, SaveSchemaResponse, UserConfig, UserConfigRequest, UserConfigResponse
+from fuzzly_configs.models import BannerStore, ConfigType, CostsStore, SaveSchemaResponse, UserConfig, UserConfigRequest, UserConfigResponse, Color
+from kh_common.utilities import int_from_bytes, int_to_bytes
 
 
 PatreonClient: PatreonApi = PatreonApi(creator_access_token)
@@ -28,6 +30,7 @@ UserConfigKeyFormat: str = 'user.{user_id}'
 SetAvroSchemaGateway: Gateway = Gateway(avro_host + '/v1/schema', SaveSchemaResponse, 'POST')
 GetAvroSchemaGateway: Gateway = Gateway(avro_host + '/v1/schema/{fingerprint}', decoder=ClientResponse.read)
 AvroMarker: bytes = b'\xC3\x01'
+ColorRegex: Pattern = re_compile(r'^(?:#(?<hex>[a-f0-9]{8}|[a-f0-9]{6})|(?<var>[a-z0-9-]+))$')
 
 
 class Configs(SqlInterface) :
@@ -106,6 +109,38 @@ class Configs(SqlInterface) :
 		KVS.put(config, value)
 
 
+	def _validateColors(colors: Optional[Dict[Color, str]]) -> Optional[Dict[Color, Union[str, int]]] :
+		if not colors :
+			return None
+
+		output: Dict[str, Union[str, int]] = { }
+
+		# color input is very strict
+		for color, value in colors.items() :
+			match: Match[str] = ColorRegex.match(value)
+			if not match :
+				raise BadRequest(f'{value} is not a valid color. value must be in the form "#xxxxxx", "#xxxxxxxx", or the name of another color variable (without the preceding deshes)')
+
+			if match.group('hex') :
+				if len(match.group('hex')) == 6 :
+					output[color] = int(match.group('hex') + 'ff', 16)
+
+				elif len(match.group('hex')) == 8 :
+					output[color] = int(match.group('hex') + 'ff', 16)
+
+				else :
+					raise BadRequest(f'{value} is not a valid color. value must be in the form "#xxxxxx", "#xxxxxxxx", or the name of another color variable (without the preceding deshes)')
+
+			else :
+				if match.group('var') in Color._member_map_ :
+					output[color] = Color[match.group('var')]
+
+				else :
+					raise BadRequest(f'{value} is not a valid color. value must be in the form "#xxxxxx", "#xxxxxxxx", or the name of another color variable (without the preceding deshes)')
+
+		return output
+
+
 	@HttpErrorHandler('saving user config')
 	async def setUserConfig(self, user: KhUser, value: UserConfigRequest) -> None :
 		user_config: UserConfig = UserConfig(
@@ -114,6 +149,7 @@ class Configs(SqlInterface) :
 			# TODO: internal tokens need to be added so that we can convert handles to user ids
 			blocked_users=None,
 			wallpaper=value.wallpaper,
+			colors=self._validateColors(value.colors),
 		)
 
 		data: bytes = AvroMarker + self.UserConfigFingerprint + UserConfigSerializer(user_config)
@@ -136,22 +172,11 @@ class Configs(SqlInterface) :
 			commit=True,
 		)
 
-		wallpaper: Optional[Post] = None
-
-		if user_config.wallpaper :
-			wallpaper = await PostGateway(post=user_config.wallpaper.decode())
-
-		KVS.put(config_key, UserConfigResponse(
-			blocking_behavior=user_config.blocking_behavior,
-			blocked_tags=user_config.blocked_tags,
-			# TODO: internal tokens need to be added so that we can convert user ids to handles
-			blocked_users=None,
-			wallpaper=wallpaper,
-		))
+		KVS.put(config_key, user_config)
 
 
 	@AerospikeCache('kheina', 'configs', UserConfigKeyFormat, _kvs=KVS)
-	async def _getUserConfig(self, user_id: int) -> UserConfigResponse :
+	async def _getUserConfig(self, user_id: int) -> UserConfig :
 		data: List[bytes] = await self.query_async("""
 			SELECT bytes
 			FROM kheina.public.configs
@@ -168,12 +193,22 @@ class Configs(SqlInterface) :
 		assert value[:2] == AvroMarker
 
 		deserializer: AvroDeserializer = AvroDeserializer(read_model=UserConfig, write_model=await Configs.getSchema(value[2:10]))
-		user_config: UserConfig =  deserializer(value[10:])
+		return deserializer(value[10:])
+
+
+	@ArgsCache(TTL_minutes=1)
+	async def getPost(post_id: str) -> Post :
+		return await PostGateway(post=post_id)
+
+
+	@HttpErrorHandler('retrieving user config')
+	async def getUserConfig(self, user: KhUser) -> UserConfigResponse :
+		user_config: UserConfig = await self._getUserConfig(user.user_id)
 
 		wallpaper: Optional[Post] = None
 
 		if user_config.wallpaper :
-			wallpaper = await PostGateway(post=user_config.wallpaper.decode())
+			wallpaper = await self.getPost(user_config.wallpaper.decode())
 
 		return UserConfigResponse(
 			blocking_behavior=user_config.blocking_behavior,
@@ -184,6 +219,16 @@ class Configs(SqlInterface) :
 		)
 
 
-	@HttpErrorHandler('retrieving user config')
-	async def getUserConfig(self, user: KhUser) -> UserConfigResponse :
-		return await self._getUserConfig(user.user_id)
+	@HttpErrorHandler('retrieving custom theme')
+	async def getUserTheme(self, user: KhUser) -> str :
+		user_config: UserConfig = await self._getUserConfig(user.user_id)
+		colors: str = ''
+
+		for name, value in user_config.colors.items() :
+			if isinstance(value, int) :
+				colors += f'--{name.value}:{value:08x};'
+
+			elif isinstance(value, Color) :
+				colors += f'--{name.value}:var(--{value.value});'
+
+		return 'html{' + colors + '}'

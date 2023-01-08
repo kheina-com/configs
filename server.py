@@ -5,6 +5,7 @@ from kh_common.server import Request, ServerApp
 
 from configs import Configs
 from fuzzly_configs.models import BannerResponse, CostsStore, FundingResponse, UpdateConfigRequest, UserConfigRequest, UserConfigResponse
+from fastapi.responses import PlainTextResponse
 
 
 app = ServerApp(
@@ -76,6 +77,15 @@ async def v1UpdateUserConfig(req: Request, body: UserConfigRequest) :
 async def v1UserConfig(req: Request) :
 	await req.user.authenticated()
 	return await configs.getUserConfig(req.user)
+
+
+@app.get('/v1/theme.css', response_model=str)
+async def v1UserTheme(req: Request) :
+	await req.user.authenticated()
+	return PlainTextResponse(
+		await configs.getUserTheme(req.user),
+		media_type='text/css',
+	)
 
 
 run(startup())  # fastapi/starlette doesn't trigger startup event, so run it manually
