@@ -86,7 +86,7 @@ async def v1UserTheme(req: Request) :
 		content=await configs.getUserTheme(req.user),
 		media_type='text/css',
 		headers={
-			'cache-control': 'public, max-age=600',
+			'cache-control': 'no-cache',
 		},
 	)
 
