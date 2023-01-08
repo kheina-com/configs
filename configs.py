@@ -116,6 +116,7 @@ class Configs(SqlInterface) :
 
 		# color input is very strict
 		for color, value in colors.items() :
+			color: str = color.value.replace('_', '-')
 			match: Match[str] = ColorRegex.match(value)
 			if not match :
 				raise BadRequest(f'{value} is not a valid color. value must be in the form "#xxxxxx", "#xxxxxxxx", or the name of another color variable (without the preceding deshes)')
@@ -131,9 +132,9 @@ class Configs(SqlInterface) :
 					raise BadRequest(f'{value} is not a valid color. value must be in the form "#xxxxxx", "#xxxxxxxx", or the name of another color variable (without the preceding deshes)')
 
 			else :
-				color: str = match.group('var').replace('-', '_')
-				if match.group('var') in Color._member_map_ :
-					output[color] = Color[match.group('var')]
+				c: str = match.group('var').replace('-', '_')
+				if c in Color._member_map_ :
+					output[color] = Color[c]
 
 				else :
 					raise BadRequest(f'{value} is not a valid color. value must be in the form "#xxxxxx", "#xxxxxxxx", or the name of another color variable (without the preceding deshes)')
@@ -230,9 +231,9 @@ class Configs(SqlInterface) :
 
 		for name, value in user_config.colors.items() :
 			if isinstance(value, int) :
-				colors += f'--{name.value}:{value:08x};'
+				colors += f'--{name}:{value:08x};'
 
 			elif isinstance(value, Color) :
-				colors += f'--{name.value}:var(--{value.value.replace("_", "-")});'
+				colors += f'--{name}:var(--{value.value.replace("_", "-")});'
 
 		return 'html{' + colors + '}'
