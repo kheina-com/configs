@@ -126,6 +126,7 @@ class Configs(SqlInterface) :
 			if prop in PropValidators :
 				if PropValidators[prop].match(value) :
 					output[prop.value.replace('_', '-')] = value
+					continue
 
 				else :
 					raise BadRequest(f'{value} is not a valid value. when setting a background property, value must be a valid value for that property')
