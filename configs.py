@@ -115,14 +115,14 @@ class Configs(SqlInterface) :
 		KVS.put(config, value)
 
 
-	def _validateColors(colors: Optional[Dict[CssProperty, str]]) -> Optional[Dict[CssProperty, Union[str, int]]] :
-		if not colors :
+	def _validateColors(css_properties: Optional[Dict[CssProperty, str]]) -> Optional[Dict[CssProperty, Union[str, int]]] :
+		if not css_properties :
 			return None
 
 		output: Dict[CssProperty, Union[str, int]] = { }
 
 		# color input is very strict
-		for color, value in colors.items() :
+		for color, value in css_properties.items() :
 			color: str = color.value.replace('_', '-')
 
 			if color in ColorValidators :
@@ -165,7 +165,7 @@ class Configs(SqlInterface) :
 			# TODO: internal tokens need to be added so that we can convert handles to user ids
 			blocked_users=None,
 			wallpaper=value.wallpaper,
-			colors=Configs._validateColors(value.colors),
+			css_properties=Configs._validateColors(value.css_properties),
 		)
 
 		data: bytes = AvroMarker + self.UserConfigFingerprint + UserConfigSerializer(user_config)
@@ -239,16 +239,16 @@ class Configs(SqlInterface) :
 	async def getUserTheme(self, user: KhUser) -> str :
 		user_config: UserConfig = await self._getUserConfig(user.user_id)
 
-		if not user_config.colors :
+		if not user_config.css_properties :
 			return ''
 
-		colors: str = ''
+		css_properties: str = ''
 
-		for name, value in user_config.colors.items() :
+		for name, value in user_config.css_properties.items() :
 			if isinstance(value, int) :
-				colors += f'--{name}:#{value:08x} !important;'
+				css_properties += f'--{name}:#{value:08x} !important;'
 
 			elif isinstance(value, CssProperty) :
-				colors += f'--{name}:var(--{value.value.replace("_", "-")}) !important;'
+				css_properties += f'--{name}:var(--{value.value.replace("_", "-")}) !important;'
 
-		return 'html{' + colors + '}'
+		return 'html{' + css_properties + '}'
