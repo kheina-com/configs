@@ -2,7 +2,6 @@ from enum import Enum, unique
 from typing import Dict, List, Literal, Optional, Set, Union
 
 from avrofastapi.schema import AvroInt
-from fuzzly_posts.models import Post
 from pydantic import BaseModel, ConstrainedStr, conbytes, constr
 
 
@@ -121,4 +120,4 @@ class UserConfigResponse(BaseModel) :
 	blocking_behavior: Optional[BlockingBehavior]
 	blocked_tags: Optional[List[Set[str]]]
 	blocked_users: Optional[List[str]]
-	wallpaper: Optional[Post]
+	wallpaper: Optional[str]

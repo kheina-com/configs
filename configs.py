@@ -1,16 +1,14 @@
 from functools import lru_cache
 from re import Match, Pattern
 from re import compile as re_compile
-from typing import Dict, List, Optional, Set, Tuple, Type, Union
+from typing import Dict, List, Optional, Tuple, Type, Union
 
 from aiohttp import ClientResponse
 from avrofastapi.schema import convert_schema
 from avrofastapi.serialization import AvroDeserializer, AvroSerializer, Schema, parse_avro_schema
-from fuzzly_posts import PostGateway
-from fuzzly_posts.models import Post
 from kh_common.auth import KhUser
 from kh_common.base64 import b64decode, b64encode
-from kh_common.caching import AerospikeCache, ArgsCache
+from kh_common.caching import AerospikeCache
 from kh_common.caching.key_value_store import KeyValueStore
 from kh_common.config.constants import avro_host
 from kh_common.config.credentials import creator_access_token
@@ -213,26 +211,16 @@ class Configs(SqlInterface) :
 		return deserializer(value[10:])
 
 
-	@ArgsCache(TTL_minutes=1)
-	async def getPost(user: KhUser, post_id: str) -> Post :
-		return await PostGateway(post=post_id, auth=user.token.token_string)
-
-
 	@HttpErrorHandler('retrieving user config')
 	async def getUserConfig(self, user: KhUser) -> UserConfigResponse :
 		user_config: UserConfig = await self._getUserConfig(user.user_id)
-
-		wallpaper: Optional[Post] = None
-
-		if user_config.wallpaper :
-			wallpaper = await Configs.getPost(user, user_config.wallpaper.decode())
 
 		return UserConfigResponse(
 			blocking_behavior=user_config.blocking_behavior,
 			blocked_tags=user_config.blocked_tags,
 			# TODO: internal tokens need to be added so that we can convert user ids to handles
 			blocked_users=None,
-			wallpaper=wallpaper,
+			wallpaper=user_config.wallpaper.decode(),
 		)
 
 
