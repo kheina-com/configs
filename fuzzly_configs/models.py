@@ -5,6 +5,9 @@ from avrofastapi.schema import AvroInt
 from pydantic import BaseModel, ConstrainedStr, conbytes, constr
 
 
+UserConfigKeyFormat: str = 'user.{user_id}'
+
+
 class BannerStore(BaseModel) :
 	banner: Optional[str]
 

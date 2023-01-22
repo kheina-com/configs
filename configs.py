@@ -18,13 +18,12 @@ from kh_common.sql import SqlInterface
 from patreon import API as PatreonApi
 from pydantic import BaseModel
 
-from fuzzly_configs.models import BannerStore, ConfigType, CostsStore, CssProperty, SaveSchemaResponse, UserConfig, UserConfigRequest, UserConfigResponse
+from fuzzly_configs.models import BannerStore, ConfigType, CostsStore, CssProperty, SaveSchemaResponse, UserConfig, UserConfigKeyFormat, UserConfigRequest, UserConfigResponse
 
 
 PatreonClient: PatreonApi = PatreonApi(creator_access_token)
 KVS: KeyValueStore = KeyValueStore('kheina', 'configs', local_TTL=60)
 UserConfigSerializer: AvroSerializer = AvroSerializer(UserConfig)
-UserConfigKeyFormat: str = 'user.{user_id}'
 SetAvroSchemaGateway: Gateway = Gateway(avro_host + '/v1/schema', SaveSchemaResponse, 'POST')
 GetAvroSchemaGateway: Gateway = Gateway(avro_host + '/v1/schema/{fingerprint}', decoder=ClientResponse.read)
 AvroMarker: bytes = b'\xC3\x01'
