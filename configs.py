@@ -1,4 +1,3 @@
-from functools import lru_cache
 from re import Match, Pattern
 from re import compile as re_compile
 from typing import Dict, List, Optional, Tuple, Type, Union
@@ -6,6 +5,7 @@ from typing import Dict, List, Optional, Tuple, Type, Union
 from aiohttp import ClientResponse
 from avrofastapi.schema import convert_schema
 from avrofastapi.serialization import AvroDeserializer, AvroSerializer, Schema, parse_avro_schema
+from cache import AsyncLRU
 from kh_common.auth import KhUser
 from kh_common.base64 import b64decode, b64encode
 from kh_common.caching import AerospikeCache
@@ -55,7 +55,7 @@ class Configs(SqlInterface) :
 		assert self.SerializerTypeMap.keys() == set(ConfigType.__members__.values()), 'Did you forget to add serializers for a config?'
 
 
-	@lru_cache(maxsize=32)
+	@AsyncLRU(maxsize=32)
 	async def getSchema(fingerprint: bytes) -> Schema:
 		return parse_avro_schema(await GetAvroSchemaGateway(fingerprint=b64encode(fingerprint).decode()))
 
